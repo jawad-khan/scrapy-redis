@@ -1,7 +1,14 @@
-============
-Scrapy-Redis
-============
+==========================
+Changes from original code
+==========================
 
+Scrapy redis serializes crawler requests before storing them in redis queue. It works fine with crawler requests but gives
+error with parser requests since they have requests objects in garment meta object(Scrapy request object needs to be
+serialized in special way before storing them in redis queue). Added customized request encoding and decoding method so it can
+handle parser requests.
+
+Scrapy-Redis
+------------
 .. image:: https://readthedocs.org/projects/scrapy-redis/badge/?version=latest
         :target: https://readthedocs.org/projects/scrapy-redis/?badge=latest
         :alt: Documentation Status
