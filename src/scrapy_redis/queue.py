@@ -37,15 +37,37 @@ class Base(object):
         self.key = key % {'spider': spider.name}
         self.serializer = serializer
 
+    def __encode_parser_request__(self, request, spider):
+        if request.meta.get('garment'):
+            requests_queue = request.meta['garment']['meta']['requests_queue']
+            serialized_requests = [request_to_dict(req, spider) for req in requests_queue]
+            request.meta['garment']['meta']['requests_queue'] = serialized_requests
+
     def _encode_request(self, request):
         """Encode a request object"""
-        obj = request_to_dict(request, self.spider)
+        spider  = self.spider
+        if request.meta.get('parser_request'):
+            spider = self.spider.parse_spider
+            self.__encode_parser_request__(request, spider)
+
+        obj = request_to_dict(request, spider)
         return self.serializer.dumps(obj)
+
+    def __decode_parser_request__(self, obj, spider):
+        if obj['meta'].get('garment'):
+            serialized_requests = obj['meta']['garment']['meta']['requests_queue']
+            requests_queue = [request_from_dict(req, spider) for req in serialized_requests]
+            obj['meta']['garment']['meta']['requests_queue'] = requests_queue
 
     def _decode_request(self, encoded_request):
         """Decode an request previously encoded"""
         obj = self.serializer.loads(encoded_request)
-        return request_from_dict(obj, self.spider)
+        spider = self.spider
+        if obj['meta'].get('parser_request'):
+            spider = self.spider.parse_spider
+            self.__decode_parser_request__(obj, spider)
+
+        return request_from_dict(obj, spider)
 
     def __len__(self):
         """Return the length of the queue"""
